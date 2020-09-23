@@ -1,0 +1,612 @@
+{
+	"info": {
+		"_postman_id": "116c76a2-4a84-4938-898e-20eebbc16656",
+		"name": "Bitaps",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Create Wallet",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "31afa61b-0212-490f-8c19-d566729356f5",
+						"exec": [
+							"pm.test(\"Status test\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Responce Check\", function () {\r",
+							"    const responceJson = pm.response.json();\r",
+							"    pm.expect(responceJson).to.have.property(\"wallet_id\");\r",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "e766449f-46d5-4c09-a3bd-0eee39de1a5b",
+						"exec": [
+							"var now_currency_is = pm.environment.get(\"currency\");\r",
+							"now_currency_is = (now_currency_is == \"btc\") ? \"eth\" : \"btc\";\r",
+							"pm.environment.set(\"currency\", now_currency_is);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{host}}/{{currency}}/{{host2}}/create/wallet",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"{{currency}}",
+						"{{host2}}",
+						"create",
+						"wallet"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Check Wallet",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "c26fae28-b33b-49ce-b05e-8362064db121",
+						"exec": [
+							"/* \r",
+							"\r",
+							"Закомментировал здесь этот скрипт, так как ясно, что он через раз срабатывает, \r",
+							"поскольку проверяется конкретный кошелёк с btc валютой!\r",
+							"\r",
+							"var now_currency_is = pm.environment.get(\"currency\");\r",
+							"console.log(now_currency_is);\r",
+							"now_currency_is = (now_currency_is == \"btc\") ? \"eth\" : \"btc\";\r",
+							"pm.environment.set(\"currency\", now_currency_is);\r",
+							"console.log(pm.variables.get(\"currency\"));\r",
+							"*/\r",
+							"/*\r",
+							"И написал другой, чтобы 'eth' жить не мешал\r",
+							" */\r",
+							"pm.environment.set(\"currency\", \"btc\");"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"id": "6e88e640-288f-42fb-ad01-51fa1c083fcd",
+						"exec": [
+							"/*\r",
+							"    В конце теста рассчитывается, сколько времени прошло с момента создания кошелька,\r",
+							"    результат выводится в консоль\r",
+							"*/\r",
+							"\r",
+							"let responseJson;\r",
+							"\r",
+							"var timestamp1 = Math.round(+new Date() / 1000);\r",
+							"\r",
+							"pm.test(\"Responce Check\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"// check if exists \"wallet_id_hash\": \"435afdd734bae34da20a4eab407bbca342ab0c3853753b5bd41d3a9effa4234d\"\r",
+							"pm.test(\"Currency Check\", function () {\r",
+							"    responseJson = pm.response.json();\r",
+							"    pm.expect(responseJson).to.have.property(\"wallet_id_hash\");\r",
+							"    pm.expect(responseJson.currency).to.include(\"BTC\");\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Wallet_id_hash Check\", function () {\r",
+							"    pm.expect(responseJson.wallet_id_hash).to.eql('435afdd734bae34da20a4eab407bbca342ab0c3853753b5bd41d3a9effa4234d');\r",
+							"});\r",
+							"\r",
+							"\r",
+							"var timestamp2 = responseJson.create_date_timestamp;\r",
+							"var timestamps_dif = timestamp1 - timestamp2;\r",
+							"\r",
+							"const bad_answer = \"The timestamp wasn't defined!\";\r",
+							"\r",
+							"// перевести миллисекунды или секунды в дни/часы/минуты/секунды:\r",
+							"var \r",
+							"    // Из количества секунд или миллисекунд в объект с кол-вом дней, часов, минут, секунд. Например: 22 д. 10 ч. 60 с.\r",
+							"    millisecToTimeStruct = function (t) {\r",
+							"        var d, h, m, s;\r",
+							"        if (isNaN(t)) {\r",
+							"            return {};\r",
+							"        }\r",
+							"        // d = t / (1000 * 60 * 60 * 24); //- for milliseconds\r",
+							"        d = t / (60 * 60 * 24); //- for seconds\r",
+							"        h = (d - ~~d) * 24;\r",
+							"        m = (h - ~~h) * 60;\r",
+							"        s = (m - ~~m) * 60;\r",
+							"        return {d: ~~d, h: ~~h, m: ~~m, s: ~~s};\r",
+							"    },\r",
+							"    // форматируем вывод\r",
+							"    toFormattedStr = function(tStruct){\r",
+							"        var res = '';\r",
+							"        if (typeof tStruct === 'object'){\r",
+							"            if (!isNaN(tStruct.d) && !isNaN(tStruct.h) && !isNaN(tStruct.m) && !isNaN(tStruct.s)) {\r",
+							"                res += tStruct.d + ' d. '+ tStruct.h + ' h. ' + tStruct.m + ' min. ' + tStruct.s + ' sec.';\r",
+							"            }\r",
+							"            else {\r",
+							"                res = bad_answer;\r",
+							"            }\r",
+							"        }\r",
+							"        return res;\r",
+							"    };\r",
+							"\r",
+							"// client code:\r",
+							"var\r",
+							"    timeStruct = millisecToTimeStruct(timestamps_dif),\r",
+							"    formattedString = toFormattedStr(timeStruct);\r",
+							"\r",
+							"// Результат расчёта\r",
+							"if (formattedString != bad_answer)\r",
+							"    console.log('Your wallet has been created ' + formattedString + ' ago');\r",
+							"else\r",
+							"    console.log(bad_answer);\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "{{host}}/{{currency}}/{{host2}}/wallet/state/BTCvzj52WzUra5jt94bi9C7DVKdYeVj6o99mAiwwAcWVRsXF3idgJ",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"{{currency}}",
+						"{{host2}}",
+						"wallet",
+						"state",
+						"BTCvzj52WzUra5jt94bi9C7DVKdYeVj6o99mAiwwAcWVRsXF3idgJ"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create Address",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "a2fac7d7-cde2-4309-8061-b9c3dfdd4b45",
+						"exec": [
+							"pm.test(\"Status test\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Responce Check\", function () {\r",
+							"    const responceJson = pm.response.json();\r",
+							"    pm.expect(responceJson).to.have.property(\"address\");\r",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n     \"wallet_id\": \"BTCvzj52WzUra5jt94bi9C7DVKdYeVj6o99mAiwwAcWVRsXF3idgJ\",\r\n     \"wallet_id_hash\": \"435afdd734bae34da20a4eab407bbca342ab0c3853753b5bd41d3a9effa4234d\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{host}}/btc/{{host2}}/create/wallet/payment/address",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"btc",
+						"{{host2}}",
+						"create",
+						"wallet",
+						"payment",
+						"address"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Check Address",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "a43d4594-6ca5-4766-a90a-acc968a77666",
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"const address_to_search = '2NBiAK41DPoXEWUtCpc6sZs6y12DtTsDyQx';\r",
+							"\r",
+							"pm.test(\"Address Check\", function () {\r",
+							"    const responseJson = pm.response.json();\r",
+							"    pm.expect(responseJson).to.have.property(\"address_list\");\r",
+							"\r",
+							"    var length = responseJson.address_list.length;\r",
+							"    console.log(length);\r",
+							"    var search_result = false; \r",
+							"    for (var i = 0; i < length; i++){\r",
+							"        console.log(responseJson.address_list[i]);\r",
+							"        if (responseJson.address_list[i].address == address_to_search) {\r",
+							"            search_result = true;\r",
+							"            break;\r",
+							"        }\r",
+							"    }\r",
+							"    pm.expect(search_result).to.eql(true);\r",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "5756a32f-1f9e-465d-b7d4-84043cabf107",
+						"exec": [
+							"/*\r",
+							"\r",
+							"Закомментировал здесь этот скрипт, так как ясно, что он через раз срабатывает, \r",
+							"поскольку проверяется конкретный адрес!\r",
+							"\r",
+							"var now_currency_is = pm.environment.get(\"currency\");\r",
+							"console.log(now_currency_is);\r",
+							"now_currency_is = (now_currency_is == \"btc\") ? \"eth\" : \"btc\";\r",
+							"pm.environment.set(\"currency\", now_currency_is);\r",
+							"console.log(pm.variables.get(\"currency\"));\r",
+							"*/\r",
+							"/*\r",
+							"И написал другой, чтобы 'eth' жить не мешал\r",
+							" */\r",
+							"pm.environment.set(\"currency\", \"btc\");"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{host}}/{{currency}}/{{host2}}/wallet/addresses/BTCvzj52WzUra5jt94bi9C7DVKdYeVj6o99mAiwwAcWVRsXF3idgJ",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"{{currency}}",
+						"{{host2}}",
+						"wallet",
+						"addresses",
+						"BTCvzj52WzUra5jt94bi9C7DVKdYeVj6o99mAiwwAcWVRsXF3idgJ"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Average Price",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "14ba92ad-000d-45d4-b6ac-8d0474132e7e",
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"// Let's check accordance of data to awaited JSON Schema\r",
+							"const schema = \r",
+							"{\r",
+							"    \"$schema\": \"http://json-schema.org/draft-07/schema\",\r",
+							"    \"$id\": \"http://example.com/example.json\",\r",
+							"    \"type\": \"object\",\r",
+							"    \"title\": \"The root schema\",\r",
+							"    \"description\": \"The root schema comprises the entire JSON document.\",\r",
+							"    \"default\": {},\r",
+							"    \"examples\": [\r",
+							"        {\r",
+							"            \"data\": {\r",
+							"                \"last\": 10420.67,\r",
+							"                \"last_change\": 1.85,\r",
+							"                \"volume\": 60080.21,\r",
+							"                \"open\": 10869.9,\r",
+							"                \"high\": 10984.38,\r",
+							"                \"low\": 10316.75,\r",
+							"                \"markets\": 7\r",
+							"            },\r",
+							"            \"time\": 6.91e-06\r",
+							"        }\r",
+							"    ],\r",
+							"    \"required\": [\r",
+							"        \"data\",\r",
+							"        \"time\"\r",
+							"    ],\r",
+							"    \"properties\": {\r",
+							"        \"data\": {\r",
+							"            \"$id\": \"#/properties/data\",\r",
+							"            \"type\": \"object\",\r",
+							"            \"title\": \"The data schema\",\r",
+							"            \"description\": \"An explanation about the purpose of this instance.\",\r",
+							"            \"default\": {},\r",
+							"            \"examples\": [\r",
+							"                {\r",
+							"                    \"last\": 10420.67,\r",
+							"                    \"last_change\": 1.85,\r",
+							"                    \"volume\": 60080.21,\r",
+							"                    \"open\": 10869.9,\r",
+							"                    \"high\": 10984.38,\r",
+							"                    \"low\": 10316.75,\r",
+							"                    \"markets\": 7\r",
+							"                }\r",
+							"            ],\r",
+							"            \"required\": [\r",
+							"                \"last\",\r",
+							"                \"last_change\",\r",
+							"                \"volume\",\r",
+							"                \"open\",\r",
+							"                \"high\",\r",
+							"                \"low\",\r",
+							"                \"markets\"\r",
+							"            ],\r",
+							"            \"properties\": {\r",
+							"                \"last\": {\r",
+							"                    \"$id\": \"#/properties/data/properties/last\",\r",
+							"                    \"type\": \"number\",\r",
+							"                    \"title\": \"The last schema\",\r",
+							"                    \"description\": \"An explanation about the purpose of this instance.\",\r",
+							"                    \"default\": 0.0,\r",
+							"                    \"examples\": [\r",
+							"                        10420.67\r",
+							"                    ]\r",
+							"                },\r",
+							"                \"last_change\": {\r",
+							"                    \"$id\": \"#/properties/data/properties/last_change\",\r",
+							"                    \"type\": \"number\",\r",
+							"                    \"title\": \"The last_change schema\",\r",
+							"                    \"description\": \"An explanation about the purpose of this instance.\",\r",
+							"                    \"default\": 0.0,\r",
+							"                    \"examples\": [\r",
+							"                        1.85\r",
+							"                    ]\r",
+							"                },\r",
+							"                \"volume\": {\r",
+							"                    \"$id\": \"#/properties/data/properties/volume\",\r",
+							"                    \"type\": \"number\",\r",
+							"                    \"title\": \"The volume schema\",\r",
+							"                    \"description\": \"An explanation about the purpose of this instance.\",\r",
+							"                    \"default\": 0.0,\r",
+							"                    \"examples\": [\r",
+							"                        60080.21\r",
+							"                    ]\r",
+							"                },\r",
+							"                \"open\": {\r",
+							"                    \"$id\": \"#/properties/data/properties/open\",\r",
+							"                    \"type\": \"number\",\r",
+							"                    \"title\": \"The open schema\",\r",
+							"                    \"description\": \"An explanation about the purpose of this instance.\",\r",
+							"                    \"default\": 0.0,\r",
+							"                    \"examples\": [\r",
+							"                        10869.9\r",
+							"                    ]\r",
+							"                },\r",
+							"                \"high\": {\r",
+							"                    \"$id\": \"#/properties/data/properties/high\",\r",
+							"                    \"type\": \"number\",\r",
+							"                    \"title\": \"The high schema\",\r",
+							"                    \"description\": \"An explanation about the purpose of this instance.\",\r",
+							"                    \"default\": 0.0,\r",
+							"                    \"examples\": [\r",
+							"                        10984.38\r",
+							"                    ]\r",
+							"                },\r",
+							"                \"low\": {\r",
+							"                    \"$id\": \"#/properties/data/properties/low\",\r",
+							"                    \"type\": \"number\",\r",
+							"                    \"title\": \"The low schema\",\r",
+							"                    \"description\": \"An explanation about the purpose of this instance.\",\r",
+							"                    \"default\": 0.0,\r",
+							"                    \"examples\": [\r",
+							"                        10316.75\r",
+							"                    ]\r",
+							"                },\r",
+							"                \"markets\": {\r",
+							"                    \"$id\": \"#/properties/data/properties/markets\",\r",
+							"                    \"type\": \"integer\",\r",
+							"                    \"title\": \"The markets schema\",\r",
+							"                    \"description\": \"An explanation about the purpose of this instance.\",\r",
+							"                    \"default\": 0,\r",
+							"                    \"examples\": [\r",
+							"                        7\r",
+							"                    ]\r",
+							"                }\r",
+							"            },\r",
+							"            \"additionalProperties\": true\r",
+							"        },\r",
+							"        \"time\": {\r",
+							"            \"$id\": \"#/properties/time\",\r",
+							"            \"type\": \"number\",\r",
+							"            \"title\": \"The time schema\",\r",
+							"            \"description\": \"An explanation about the purpose of this instance.\",\r",
+							"            \"default\": 0.0,\r",
+							"            \"examples\": [\r",
+							"                6.91e-06\r",
+							"            ]\r",
+							"        }\r",
+							"    },\r",
+							"    \"additionalProperties\": true\r",
+							"};\r",
+							"\r",
+							"pm.test('Schema is valid', function() {\r",
+							"    pm.response.to.have.jsonSchema(schema);\r",
+							"});\r",
+							"\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "{{MarketAPIHost}}/ticker/btcusd",
+					"host": [
+						"{{MarketAPIHost}}"
+					],
+					"path": [
+						"ticker",
+						"btcusd"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Ticker List",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "8444d128-3010-4dd6-b2b5-15f53d1dd8fa",
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"let responseJson;\r",
+							"\r",
+							"pm.test(\"Data type of the response is an object\", function () {\r",
+							"    const jsonData = pm.response.json();\r",
+							"    pm.expect(jsonData).to.be.an(\"object\");\r",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{MarketAPIHost}}/tickers/btcusd",
+					"host": [
+						"{{MarketAPIHost}}"
+					],
+					"path": [
+						"tickers",
+						"btcusd"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Node List",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "98f02b42-6d1c-457b-bc76-1cdb2146fbb3",
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Response time is less than 2000 ms\", () => {\r",
+							"    pm.expect(pm.response.responseTime).to.be.below(2000);\r",
+							"});\r",
+							"\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://api.bitaps.com/btc/v1/nodes/list",
+					"protocol": "https",
+					"host": [
+						"api",
+						"bitaps",
+						"com"
+					],
+					"path": [
+						"btc",
+						"v1",
+						"nodes",
+						"list"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"id": "edae27c7-248e-4d87-bb32-3c636f34c33f",
+			"key": "currency",
+			"value": ""
+		},
+		{
+			"id": "62217321-f2ea-4629-9fa1-c6340a37d0c2",
+			"key": "btcWallet",
+			"value": ""
+		}
+	],
+	"protocolProfileBehavior": {}
+}
